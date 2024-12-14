@@ -7,7 +7,7 @@ class Tilemap:
         # initializes tilemap
        self.game = game
        self.tilesize = 8
-       self.neighbours = [(x, y) for x in range(-1, 4) for y in range(-1, 4)] 
+       self.neighbours = [(x, y) for x in range(-2, 5) for y in range(-2, 5)] 
        self.tilemap = {}
        self.offgrid = {}
 
