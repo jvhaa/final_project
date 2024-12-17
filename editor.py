@@ -13,7 +13,9 @@ class Game:
         self.move = [False, False, False, False]
 
         self.assets = {
-            "colliables" : load_images("colliables")
+            "colliables" : load_images("colliables"),
+            "flag" : load_images("flag"),
+            "spawner" : load_images("spawner")
         }
 
         self.Tilemap = Tilemap(self, (0,0))
@@ -39,7 +41,8 @@ class Game:
     
     def run(self):
         while True:
-            if self.tilegroup == 2:
+            self.display.fill((125, 125, 255))
+            if self.tilelist[self.tilegroup] == "spawner":
                 self.ongrid = False
             self.scroll[0] += (self.move[1] - self.move[0]) *2
             self.scroll[1] += (self.move[3] - self.move[2]) *2 
@@ -55,12 +58,11 @@ class Game:
                 tile_loc = str(tile_pos[0]) + ";" + str(tile_pos[1])
                 if tile_loc in self.Tilemap.tilemap:
                     del self.Tilemap.tilemap[tile_loc]
-                for tile in self.Tilemap.offgrid.copy():
+                for pos, tile in self.Tilemap.offgrid.copy().items():
                     tile_img = self.assets[tile['type']][tile['variant']]
                     tile_r = pygame.Rect(tile['pos'][0] - self.scroll[0], tile['pos'][1] - self.scroll[1], tile_img.get_width(), tile_img.get_height())
                     if tile_r.collidepoint(mpos):
-                        self.Tilemap.offgrid.remove(tile)
-            self.display.fill((0, 0, 0))
+                        self.Tilemap.offgrid.pop(pos)
             self.Tilemap.render(self.display, render_scroll)
             if self.ongrid:
                 self.display.blit(current_tile, (tile_pos[0]*self.Tilemap.tilesize-self.scroll[0], tile_pos[1]*self.Tilemap.tilesize-self.scroll[1]))
@@ -125,15 +127,17 @@ class Game:
                     if event.key == pygame.K_LEFT:
                         self.ml = max(0, self.ml-1)
                         try:
-                            self.Tilemap.load("maps/" + str(self.ml))
+                            self.Tilemap.load(self.ml)
                         except FileNotFoundError:
-                            print('nuh uh')
+                            self.Tilemap.tilemap = {}
+                            self.Tilemap.offgrid = {}
                     if event.key == pygame.K_RIGHT:
                         self.ml += 1
                         try:
-                            self.Tilemap.load("maps/" + str(self.ml))
+                            self.Tilemap.load(str(self.ml))
                         except FileNotFoundError:
-                            print('nuh uh')
+                            self.Tilemap.tilemap = {}
+                            self.Tilemap.offgrid = {}
             pygame.display.update()
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
             self.clock.tick(60)

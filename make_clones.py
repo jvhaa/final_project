@@ -8,6 +8,8 @@ import json
 from scripts.utils import load_image, load_images, Animation
 from scripts.player import Player, Clone
 from scripts.tilemap import Tilemap
+from scripts.flag import Flag
+from scripts.loadfile import get_file
 
 
 # making game a class
@@ -18,22 +20,22 @@ class game:
         self.screen = pygame.display.set_mode((800, 600))
         self.display = pygame.Surface((self.screen.width/2, self.screen.height/2))
         self.clock = pygame.time.Clock()
-        self.player = Player((0,0), (10, 20))
         self.camerapos = [0, 0]
+        self.assets = {
+            "colliables" : load_images("colliables"),
+            "flag" : load_images("flag"),
+            "background/game" : load_image("background/game.png"),
+            "player/idle" : Animation(load_images("entity/player/idle")),
+            "ai/idle" : Animation(load_images("entity/ai/idle")),
+            "player/run" : Animation(load_images("entity/player/run")),
+            "ai/run" : Animation(load_images("entity/ai/run")),
+        }
+        self.player = Player((0,0), "player", self)
         self.tilemap = Tilemap(self, self.player.size)
         self.gamestate = "game"
-        self.tilemap.load(0)
-        self.assets = {
-            "colliables" : load_images("colliables")
-        }
         self.movement = [False, False]
-        self.starttime = time.time()
-        self.lastmoved = time.time()
-        self.moves = {}
         self.level = 0
-        file = open("ais_moves/" + str(self.level)  + ".json")
-        self.clone = Clone((0,0), (10, 20), json.load(file))
-        file.close()
+        self.load_level()
 
     # changes what game loop you are in : main menu, end screen, game, pause screen, etc
     def change_state(self):
@@ -75,9 +77,15 @@ class game:
                             self.player.dash() # dashes if the player presses q
                             self.moves[self.Time()] = {"action" : "dash", "passed": False}
                         if event.key == pygame.K_e:
-                            file = open("ais_moves/0.json", "w")
+                            file = open("ais_moves/" + str(self.level) + ".json", "w")
                             json.dump(self.moves, file)
                             file.close()
+                        if event.key == pygame.K_LEFT:
+                            self.level = max(self.level-1, 0)
+                            self.load_level()
+                        if event.key == pygame.K_RIGHT:
+                            self.level += 1
+                            self.load_level()
                     if event.type == pygame.KEYUP:
                         if event.key == pygame.K_a:
                             self.movement[0] = False # if you let go of a stop moving left
@@ -85,6 +93,7 @@ class game:
                         if event.key == pygame.K_d:
                             self.movement[1] = False # if you let go of d stop moving right
                             self.moves[self.Time()] = {"action" : "left", "passed": False}
+            self.display.blit(self.assets["background/" + str(self.gamestate)], (0,0))
             if self.gamestate == "game":
                 self.game()
 
@@ -95,13 +104,29 @@ class game:
 
     # the main game loop
     def game(self):
-        self.display.fill((0,0,0))
         self.camerapos[0] += int((self.player.pos[0] - self.camerapos[0] - self.display.width//2)//20)
         self.camerapos[1] += int((self.player.pos[1] - self.camerapos[1] - self.display.height//2)//20)
         self.player.update(self.tilemap, ((self.movement[1] - self.movement[0])*2))
         self.player.render(self.display,self.camerapos)
         self.clone.update(self.tilemap, time.time()-self.starttime)
         self.clone.render(self.display, self.camerapos)
+        self.flag.render(self, self.display, self.camerapos)
         self.tilemap.render(self.display, self.camerapos)
+    
+    def load_level(self):
+        self.tilemap.load(self.level)
+        self.moves = {}
+        player = self.tilemap.extract(("spawner", 0))[0]["pos"]
+        clone = self.tilemap.extract(("spawner", 1))[0]["pos"]
+        self.player.pos = clone
+        try:
+            self.starttime = time.time()
+            file = open(get_file("ais_moves/" + str(self.level)  + ".json"))
+            self.clone = Clone(clone, json.load(file), self)
+            file.close()
+        except FileNotFoundError:
+            print("hi")
+            self.clone = Clone(clone, {}, self)
+        self.flag = Flag(self.tilemap.extract(("flag", 0))[0]["pos"])
 
 game().game_handler()

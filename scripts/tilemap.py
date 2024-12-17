@@ -11,6 +11,16 @@ class Tilemap:
        self.tilemap = {}
        self.offgrid = {}
 
+    def extract(self, pair, keep = False):
+        matches = []
+        for pos, tile in self.offgrid.copy().items():
+            if (tile["type"], tile["variant"]) == pair:
+                matches.append(tile.copy())
+                if not keep:
+                    self.offgrid.pop(pos)
+        return matches
+
+
     def tiles_around(self, pos):
         # returns the map objects that are close to this position
         tiles = []
