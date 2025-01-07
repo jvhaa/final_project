@@ -25,11 +25,13 @@ class game:
             "background/game" : load_image("background/game.png"),
             "player/idle" : Animation(load_images("entity/player/idle")),
             "ai/idle" : Animation(load_images("entity/ai/idle")),
+            "player/run" : Animation(load_images("entity/player/run")),
+            "ai/run" : Animation(load_images("entity/ai/run")),
         }
         self.player = Player((0,0), "player", self)
         self.camerapos = [0, 0]
         self.tilemap = Tilemap(self, self.player.size)
-        self.gamestate = "game"
+        self.gamestate = "start"
         self.movement = [False, False]
         self.level = 0
         self.load_level()
@@ -38,7 +40,8 @@ class game:
     # changes what game loop you are in : main menu, end screen, game, pause screen, etc
     def change_state(self):
         pass
-
+        
+    # finds the current time for the bot to determine what to do
     def Time(self):
         return time.time() - self.starttime
 

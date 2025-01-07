@@ -1,6 +1,8 @@
 import pygame
 import json
+
 physics_rects = "colliables"
+autotiles = "colliables"
 
 class Tilemap:
     def __init__(self, game, playersize):
@@ -19,6 +21,15 @@ class Tilemap:
                 if not keep:
                     self.offgrid.pop(pos)
         return matches
+
+    def autotile(self):
+
+
+        for tile in self.tilemap:
+            for offset in [(x, y) for x in range(-2, 5) for y in range(-2, 5)] :
+                check_loc = str(tile_loc[0] + offset[0]) + ";" + str(tile_loc[1] + offset[1]) 
+                if check_loc in self.tilemap:
+                    tiles.append(self.tilemap[check_loc])
 
 
     def tiles_around(self, pos):
